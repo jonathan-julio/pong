@@ -1,0 +1,55 @@
+#title-gamer {
+    position: fixed;
+    top: 1%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  
+  #canvas-jogo {
+    border: 1px solid black;
+  }
+  #canvas-placar {
+    display: none;
+  }
+  #pontuacao {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
+  #game{
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+
+  }
+  .waiting-for-player {
+    position: fixed;
+    top: 15%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+
+  .loader {
+    border: 8px solid #f3f3f3;
+    border-top: 8px solid #3498db;
+    border-radius: 50%;
+    position: fixed;
+    left: 40%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
