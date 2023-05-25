@@ -4,63 +4,7 @@
     <title>Pong Multiplayer</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-      #title-gamer {
-        position: fixed;
-        top: 1%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        text-align: center;
-      }
-      
-      #canvas-jogo {
-        border: 1px solid black;
-      }
-      #canvas-placar {
-        display: none;
-      }
-      #pontuacao {
-        position: absolute;
-        top: 0;
-        right: 0;
-      }
-
-      #game{
-        position: fixed;
-        top: 40%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        text-align: center;
-
-      }
-      .waiting-for-player {
-        position: fixed;
-        top: 15%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        text-align: center;
-      }
-
-      .loader {
-        border: 8px solid #f3f3f3;
-        border-top: 8px solid #3498db;
-        border-radius: 50%;
-        position: fixed;
-        left: 40%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-      }
-
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="/style.css">
   </head>
   <body>
     <h1 id="title-gamer">Jogo do Pong</h1>
@@ -72,48 +16,14 @@
     </div>
 
     <div style="display: none;" id="game">
-      <canvas id="canvas-jogo" width="800" height="400"></canvas>
-      <canvas id="canvas-placar" width="200" height="200"></canvas>
+      <canvas id="canvas-placar" width="200" height="200"> 2 x2 </canvas>
       <div id="pontuacao"></div>
+      <canvas id="canvas-jogo"></canvas>
+      <canvas id="canvas-bola"></canvas>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
-    
-    <script>
-      const socket = io();
-      
-      socket.on('connect', function() {
-        console.log('Conectado ao servidor');
-      });
-      
-      socket.on('disconnect', function() {
-        console.log('Desconectado do servidor');
-        document.getElementById('game').style.display = 'none';
-        document.getElementById('load').style.display = 'block';
-      });
-      
-      socket.on('startGame', function(msg) {
-        console.log("if : " +msg === "Jogo iniciou" && document.getElementById('load').style.display !== 'none');
-        if (msg === "Jogo iniciou" && document.getElementById('load').style.display !== 'none') {
-          alert(msg);
-        }else{
-          alert("O jogo reiniciou");
-        }
-        document.getElementById('load').style.display = 'none';
-        document.getElementById('game').style.display = 'block';
-        //alert(msg);
-      });
-      
-      socket.on('waiting', function(msg) {
-        console.log('Aguardando jogador');
-        document.getElementById('game').style.display = 'none';
-        document.getElementById('load').style.display = 'block';
-        alert(msg);
-      });
 
-      socket.on('msg', function(msg) {
-        alert(msg);
-      });
-    </script>
+    <script src="/socket.js"></script>
   </body>
