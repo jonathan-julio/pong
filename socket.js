@@ -1,13 +1,16 @@
 const app = require('express')();
 const http = require('http').createServer(app);
-const io = require('socket.io')(http);
-
-app.get('/style.css', (req, res) => {
-  res.sendFile(__dirname +'/public/style.css');
+const io = require('socket.io')(http, {
+  cors: {
+    origin: "https://jonathan-julio.github.io",
+    methods: ["GET", "POST"]
+  }
 });
 
-app.get('/socket.js', (req, res) => {
-  res.sendFile(__dirname +'/public/socket.js');
+
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', 'https://jonathan-julio.github.io');
+  next();
 });
 
 app.get('/', (req, res) => {
@@ -17,10 +20,6 @@ app.get('/', (req, res) => {
 let jogadoresEspera = [];
 let jogos = [];
 let jogadores = [];
-
-
-
-
 
 class canvas {
   constructor(height, width) {
@@ -77,22 +76,19 @@ io.on('connection', (socket) => {
 
   socket.on('initGame', function(data) {
     const playerSocketId = socket.id;
-    const game = jogos.find(objeto => objeto.socketId1 === playerSocketId || objeto.socketId2 === playerSocketId);
-    canvas.width = data['canvasWidth'];
-    canvas.height = data['canvasHeight'];
-    if (game) {
-      if (game.socketId1 === playerSocketId) {
-        game.statusPlay1 = data["status"];
-      }
-      if (game.socketId2 === playerSocketId) {
-        game.statusPlay2 = data["status"];
-      }
-
-      const socketPlay1 = jogadores.find(jogador => jogador.id === game.socketId1);
-      const socketPlay2 = jogadores.find(jogador => jogador.id === game.socketId2);
-      socketPlay1.emit("init", (game.statusPlay1 && game.statusPlay2));
-      socketPlay2.emit("init", (game.statusPlay1 && game.statusPlay2));
+    const _player1 = jogos.find(objeto => objeto.socketId1 === playerSocketId );
+    canvas.width = data.canvasWidth;
+    canvas.height = data.canvasHeight;
+    if (_player1) {
+      _player1.statusPlay1 = data.status;
+      console.log("aqui : 1 ",_player1.statusPlay1)
     }
+    const _player2 = jogos.find(objeto => objeto.socketId2 === playerSocketId);
+    if (_player2) {
+      _player2.statusPlay2 = data.status;
+      console.log("aqui : 2 ",_player2.statusPlay1)
+    }
+    
   });
 
   socket.on('marcarPonto', function(data) {
@@ -129,15 +125,19 @@ io.on('connection', (socket) => {
   
     const socketPlay1 = jogadores.find(jogador => jogador.id === _player1);
     const socketPlay2 = jogadores.find(jogador => jogador.id === _player2);
-    if (_player1 == playerSocketId) {
-      socketPlay2.emit("update", { "oponent" : game.raquetePlay1 });
-    } else {
-      socketPlay1.emit("update", { "oponent" : game.raquetePlay2 });
-    }    
+    try {
+      if (_player1 == playerSocketId) {
+        socketPlay2.emit("update", { "oponent" : game.raquetePlay1 });
+      } else {
+        socketPlay1.emit("update", { "oponent" : game.raquetePlay2 });
+      } 
+    } catch (error) {
+      console.log(error);
+    }
+       
   });
 
   socket.on('playerPosition', function(data) {
-
     const playerSocketId = socket.id;
     var _player1;
     var _player2;
@@ -157,16 +157,19 @@ io.on('connection', (socket) => {
   
     const socketPlay1 = jogadores.find(jogador => jogador.id === _player1 );
     const socketPlay2 = jogadores.find(jogador => jogador.id === _player2 );
-    if (_player1 == playerSocketId) {
-      socketPlay2.emit("update", 
-      { "oponent" : game.raquetePlay1}
-    );
-    } else {
-      socketPlay1.emit("update", 
-      { "oponent" : game.raquetePlay2}
-    );
-      
-    }    
+    try {
+      if (_player1 == playerSocketId) {
+        socketPlay2.emit("update", 
+        { "oponent" : game.raquetePlay1}
+      );
+      } else {
+        socketPlay1.emit("update", 
+        { "oponent" : game.raquetePlay2}
+      );
+      }
+    } catch (error) {
+      console.log(error);
+    }
   });
 });
 
@@ -199,7 +202,7 @@ function checkListEspera() {
   if (jogadoresEspera.length >= 2) {
     var _player1 = jogadoresEspera[0];
     var _player2 = jogadoresEspera[1];
-    var obj = new ObjetoComDoisSockets(_player1, _player2, 50, 50, false, false, 0, 0, canvas.width / 2, canvas.height / 2, 1, 1.2);
+    var obj = new ObjetoComDoisSockets(_player1, _player2, 50, 50, false, false, 0, 0, canvas.width / 2, canvas.height / 2, 1.2, 1.4);
     jogos.push(obj);
     jogadoresEspera.splice(1, 1);
     jogadoresEspera.splice(0, 1);
@@ -225,83 +228,67 @@ function moveBall() {
     canvas.height = 150;
     canvas.width = 300
   }
-  for (var i = 0; i < jogos.length; i++) {
+  for (var i = 0; i < jogos.length; i++) {  
     var game = jogos[i];
-    
     const socketPlay1 = jogadores.find(jogador => jogador.id === game.socketId1);
     const socketPlay2 = jogadores.find(jogador => jogador.id === game.socketId2);
-    game.ballPositionX = game.ballPositionX + game.ballSpeedX;
-    game.ballPositionY = game.ballPositionY + game.ballSpeedY;
+    //console.log(socketPlay1.statusPlay1 && socketPlay2.statusPlay2)
 
-    
-
-
-
-    if (game.ballPositionX === undefined || game.ballPositionY === undefined) {
-      game.ballPositionX = canvas.width / 2;
-      game.ballPositionY = canvas.height / 2;
-      console.log("speedX a : " + game.ballPositionX);
-      console.log("speedY  a: " + game.ballPositionY);
-    }
-    console.log("ballPositionX : " + game.ballSpeedX);
-
-
-    // Lógica de colisão com as paredes verticais
-    if (game.ballPositionY + ballRadius > canvas.height || game.ballPositionY - ballRadius < 0) {
-      game.ballSpeedY = -game.ballSpeedY;
-    }
-
-    // Lógica de colisão com as raquetes
-    if (
-      (game.ballPositionX - ballRadius < larguraRaquete && game.ballPositionY + ballRadius > game.raquetePlay1 && game.ballPositionY - ballRadius < game.raquetePlay1 + alturaRaquete) ||
-      (game.ballPositionX + ballRadius > canvas.width - larguraRaquete && game.ballPositionY + ballRadius > game.raquetePlay2 && game.ballPositionY - ballRadius < game.raquetePlay2 + alturaRaquete)
-    ) {
-      game.ballSpeedX = -game.ballSpeedX;
-      
-      if (game.ballSpeedX < 3) {
-        game.ballSpeedX = game.ballSpeedX * 1.15;
-        game.ballSpeedY = game.ballSpeedY * 1.15;
-        console.log("ponto para o player 2")
+    if (game.statusPlay1 && game.statusPlay2 ) {
+      game.ballPositionX = game.ballPositionX + game.ballSpeedX;
+      game.ballPositionY = game.ballPositionY + game.ballSpeedY;
+      if (game.ballPositionX === undefined || game.ballPositionY === undefined) {
+        game.ballPositionX = canvas.width / 2;
+        game.ballPositionY = canvas.height / 2;
+        console.log("speedX a : " + game.ballPositionX);
+        console.log("speedY  a: " + game.ballPositionY);
       }
-      
-    }
-
-     // Lógica de pontuação quando a bola ultrapassa as raquetes
-     if (game.ballPositionX - ballRadius < 0 ) {
-      game.pontoPlay2 += 1;
-      console.log("ponto para o player 2");
-      game.ballPositionX = canvas.width / 2; 
-      game.ballPositionY = canvas.height / 2; 
-      
-    } else if (game.ballPositionX + ballRadius > canvas.width) {
-      game.pontoPlay1 += 1;
-      console.log("ponto para o player 1")
-      game.ballPositionX = canvas.width / 2; 
-      game.ballPositionY = canvas.height / 2;
-
-    }
-
-    if (game.ballPositionX - ballRadius < 0) {
-      game.ballPositionX = ballRadius;
-    } else if (game.ballPositionX + ballRadius > canvas.width) {
-      game.ballPositionX = canvas.width - ballRadius;
-    }
-  
-    // Verificar limites verticais
-    if (game.ballPositionY - ballRadius < 0) {
-      game.ballPositionY = ballRadius;
-    } else if (game.ballPositionY + ballRadius > canvas.height) {
-      game.ballPositionY = canvas.height - ballRadius;
-    }
-
-    socketPlay1.emit('ballPosition', { x: game.ballPositionX, y: game.ballPositionY });
-    socketPlay2.emit('ballPosition', { x: game.ballPositionX, y: game.ballPositionY });
-
-    socketPlay1.emit('pontos', { pontoPlay1: game.pontoPlay1, pontoPlay2: game.pontoPlay2 });
-    socketPlay2.emit('pontos', { pontoPlay1: game.pontoPlay1, pontoPlay2: game.pontoPlay2 });
-  
-    }
-   
+      // Lógica de colisão com as paredes verticais
+      if (game.ballPositionY + ballRadius > canvas.height || game.ballPositionY - ballRadius < 0) {
+        game.ballSpeedY = -game.ballSpeedY;
+      }
+      // Lógica de colisão com as raquetes
+      if (
+        (game.ballPositionX - ballRadius < larguraRaquete && game.ballPositionY + ballRadius > game.raquetePlay1 && game.ballPositionY - ballRadius < game.raquetePlay1 + alturaRaquete) ||
+        (game.ballPositionX + ballRadius > canvas.width - larguraRaquete && game.ballPositionY + ballRadius > game.raquetePlay2 && game.ballPositionY - ballRadius < game.raquetePlay2 + alturaRaquete)
+      ) {
+        game.ballSpeedX = -game.ballSpeedX;
+        if ((game.ballSpeedX < 2.5 && game.ballSpeedX > 0) || (game.ballSpeedX > -2.5 && game.ballSpeedX < 0) ) {
+          game.ballSpeedX = game.ballSpeedX * 1.15;
+          game.ballSpeedY = game.ballSpeedY * 1.15;
+          console.log("ponto para o player 2 : ", game.ballSpeedY)
+        }
+      }
+      // Lógica de pontuação quando a bola ultrapassa as raquetes
+      if (game.ballPositionX - ballRadius < 0 ) {
+        game.pontoPlay2 += 1;
+        console.log("ponto para o player 2");
+        game.ballPositionX = canvas.width / 2; 
+        game.ballPositionY = canvas.height / 2; 
+        
+      } else if (game.ballPositionX + ballRadius > canvas.width) {
+        game.pontoPlay1 += 1;
+        console.log("ponto para o player 1")
+        game.ballPositionX = canvas.width / 2; 
+        game.ballPositionY = canvas.height / 2;
+      }
+      if (game.ballPositionX - ballRadius < 0) {
+        game.ballPositionX = ballRadius;
+      } else if (game.ballPositionX + ballRadius > canvas.width) {
+        game.ballPositionX = canvas.width - ballRadius;
+      }
+      // Verificar limites verticais
+      if (game.ballPositionY - ballRadius < 0) {
+        game.ballPositionY = ballRadius;
+      } else if (game.ballPositionY + ballRadius > canvas.height) {
+        game.ballPositionY = canvas.height - ballRadius;
+      }
+      socketPlay1.emit('ballPosition', { x: game.ballPositionX, y: game.ballPositionY });
+      socketPlay2.emit('ballPosition', { x: game.ballPositionX, y: game.ballPositionY });
+      socketPlay1.emit('pontos', { pontoPlay1: game.pontoPlay1, pontoPlay2: game.pontoPlay2 });
+      socketPlay2.emit('pontos', { pontoPlay1: game.pontoPlay1, pontoPlay2: game.pontoPlay2 });
+      }
+  }
 }
 
 function notifyPoint(game, player) {
