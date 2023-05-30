@@ -81,12 +81,10 @@ io.on('connection', (socket) => {
     canvas.height = data.canvasHeight;
     if (_player1) {
       _player1.statusPlay1 = data.status;
-      console.log("aqui : 1 ",_player1.statusPlay1)
     }
     const _player2 = jogos.find(objeto => objeto.socketId2 === playerSocketId);
     if (_player2) {
       _player2.statusPlay2 = data.status;
-      console.log("aqui : 2 ",_player2.statusPlay1)
     }
     
   });
@@ -206,7 +204,7 @@ function checkListEspera() {
     jogos.push(obj);
     jogadoresEspera.splice(1, 1);
     jogadoresEspera.splice(0, 1);
-    console.log('jogo iniciado');
+    //console.log('jogo iniciado');
     const socket1 = jogadores.find(socket => socket.id === _player1);
     const socket2 = jogadores.find(socket => socket.id === _player2);
     if (socket1 && socket2) {
@@ -224,6 +222,7 @@ function checkListEspera() {
 }
 
 function moveBall() {
+  console.log('Jogos em andamento: ', jogos.length);
   if(canvas.width == undefined || canvas.height == undefined){
     canvas.height = 150;
     canvas.width = 300
@@ -240,8 +239,6 @@ function moveBall() {
       if (game.ballPositionX === undefined || game.ballPositionY === undefined) {
         game.ballPositionX = canvas.width / 2;
         game.ballPositionY = canvas.height / 2;
-        console.log("speedX a : " + game.ballPositionX);
-        console.log("speedY  a: " + game.ballPositionY);
       }
       // Lógica de colisão com as paredes verticais
       if (game.ballPositionY + ballRadius > canvas.height || game.ballPositionY - ballRadius < 0) {
@@ -256,19 +253,18 @@ function moveBall() {
         if ((game.ballSpeedX < 2.5 && game.ballSpeedX > 0) || (game.ballSpeedX > -2.5 && game.ballSpeedX < 0) ) {
           game.ballSpeedX = game.ballSpeedX * 1.15;
           game.ballSpeedY = game.ballSpeedY * 1.15;
-          console.log("ponto para o player 2 : ", game.ballSpeedY)
         }
       }
       // Lógica de pontuação quando a bola ultrapassa as raquetes
       if (game.ballPositionX - ballRadius < 0 ) {
         game.pontoPlay2 += 1;
-        console.log("ponto para o player 2");
+        //console.log("ponto para o player 2");
         game.ballPositionX = canvas.width / 2; 
         game.ballPositionY = canvas.height / 2; 
         
       } else if (game.ballPositionX + ballRadius > canvas.width) {
         game.pontoPlay1 += 1;
-        console.log("ponto para o player 1")
+        //console.log("ponto para o player 1")
         game.ballPositionX = canvas.width / 2; 
         game.ballPositionY = canvas.height / 2;
       }
@@ -290,21 +286,5 @@ function moveBall() {
       }
   }
 }
-
-function notifyPoint(game, player) {
-  const socketPlay1 = jogadores.find(jogador => jogador.id === game.socketId1);
-  const socketPlay2 = jogadores.find(jogador => jogador.id === game.socketId2);
-
-  if (player === 1) {
-    socketPlay1.emit('ponto', { jogador: 1 });
-    socketPlay2.emit('ponto', { jogador: 1 });
-  } else if (player === 2) {
-    socketPlay1.emit('ponto', { jogador: 2 });
-    socketPlay2.emit('ponto', { jogador: 2 });
-  }
-}
-
-
-
 
 setInterval(moveBall, 1000 / 60); // Move a bola a cada 1/60 segundos (60 FPS)
